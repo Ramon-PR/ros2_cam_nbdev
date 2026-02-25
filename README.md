@@ -153,11 +153,17 @@ repository” to create your own repository with the same structure as
 this one. Then you can clone that repository to your local machine and
 start working on it.
 
-The repo contains just one bash file `prepare_project.bash` with the
-previous steps to create a project with uv and nbdev capabilities. You
+The repo contains this `README.md` and one bash file in the `scripts/` folder, `prepare_project.bash`, with the
+previous steps to create a project with `uv` and `nbdev` capabilities. You
 can run that bash file to prepare your project, or you can follow the
 steps manually.
 
+From the project root:
+``` sh
+bash scripts/prepare_project.bash
+```
+or from the scripts folder:
 ``` sh
 bash prepare_project.bash
 ```
+
