@@ -28,15 +28,28 @@ echo "ROS2 workspace directory: $ROS2_WS_DIR"
 ROS2_PKG_DIR="$ROS2_WS_DIR/src/$pkg_name"
 echo "ROS2 package directory: $ROS2_PKG_DIR"
 
-# 4. Copy auto_setup.py to package directory
-cp "$SCRIPTS_DIR/python_scripts/auto_setup.py" "$ROS2_PKG_DIR/auto_setup.py"
+# # 4. Copy universal_setup.py to package directory as setup.py
+TEMPLATE_PATH="$SCRIPTS_DIR/python_scripts/universal_setup.py"
+TARGET_PATH="$ROS2_PKG_DIR/setup.py"
+# cp "$SCRIPTS_DIR/python_scripts/universal_setup.py" "$ROS2_PKG_DIR/auto_setup.py"
 
 # 5. cd to package directory
 cd "$ROS2_PKG_DIR"
 
-# 6. Run auto_setup.py (Updates setup.py with all the python files in the package)
-python3 auto_setup.py
+# 6. Copy and populate the dynamic setup.py
 
-# 7. Compile the package using colcon build
+# Grab Git info (or fallback to system info)
+GIT_NAME=$(git config user.name)
+if [ -z "$GIT_NAME" ]; then GIT_NAME="$USER"; fi
+
+GIT_EMAIL=$(git config user.email)
+if [ -z "$GIT_EMAIL" ]; then GIT_EMAIL="TODO"; fi
+
+sed -e "s/{{PKG_NAME}}/$pkg_name/g" \
+    -e "s/{{MAINTAINER}}/$GIT_NAME/g" \
+    -e "s/{{EMAIL}}/$GIT_EMAIL/g" \
+    "$TEMPLATE_PATH" > "$TARGET_PATH"
+
+# 7. Compile
 cd "$ROS2_WS_DIR"
 colcon build --packages-select "$pkg_name" --symlink-install
