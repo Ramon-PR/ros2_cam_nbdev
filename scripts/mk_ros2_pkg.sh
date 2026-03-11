@@ -13,8 +13,8 @@ LICENSE="Apache-2.0"
 # Relevant paths
 SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
 DIR_SCRIPT=$(cd "$(dirname "$SCRIPT_PATH")" && pwd -P)
-PARENT_PATH="$DIR_SCRIPT/.."
-DEPS_PATH="$PARENT_PATH/scripts/pkg_dependencies/$deps_file"
+PARENT_PATH=$(cd "$DIR_SCRIPT/.." && pwd -P) # Ensure absolute path
+DEPS_PATH="$DIR_SCRIPT/pkg_dependencies/$deps_file" # Adjusted to use DIR_SCRIPT directly
 
 # Navigate to the parent directory of the script
 cd "$PARENT_PATH"
