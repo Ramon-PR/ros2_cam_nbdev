@@ -1,4 +1,5 @@
-#! /bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Changes with respect to the original template:
 # - ROS2 is installed in the system, so we need to use the system python packages 
@@ -15,49 +16,74 @@
 # - It seems that there is no automatic way to know that matplotlib-inline 0.2.1
 #   is incompatible with the system Matplotlib, so we need to manually add it to the constraints.txt file.
 
-# It looks for the parent directory of this script, which should be the root of the project 
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
+info()  { echo -e "${GREEN}[✔]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
+error() { echo -e "${RED}[✘]${NC} $*"; exit 1; }
+
+# Resolve project root from script location
 SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
 DIR_SCRIPT=$(cd "$(dirname "$SCRIPT_PATH")" && pwd -P)
-PARENT_PATH="$DIR_SCRIPT/.."
+PARENT_PATH=$(realpath "$DIR_SCRIPT/..")
 
-# Python version of the system, which is needed to create the right nbdev project.
-PYTHON_VERSION=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
-
-echo "Changing to the project root directory: $PARENT_PATH"
+info "Changing to the project root directory: $PARENT_PATH"
 cd "$PARENT_PATH"
 
-# Remove the template README.md file, since we will create our own.
-mv README.md README_template_ros2dev.md
+# Rename the template README so nbdev-new can create a fresh one.
+# Skip if the destination already exists to avoid overwriting a previous rename.
+if [ -f README_template_ros2dev.md ]; then
+    warn "README_template_ros2dev.md already exists — skipping rename"
+elif [ -f README.md ]; then
+    mv README.md README_template_ros2dev.md
+    info "Renamed README.md to README_template_ros2dev.md"
+else
+    warn "README.md not found — skipping rename"
+fi
 
-# Start a uv project where I can easily install dependencies. It creates a pyproject.toml file
-echo "Starting a uv project with system python version: $PYTHON_VERSION"
-uv init -p $PYTHON_VERSION
+# Python version of the system, needed to create the right uv/nbdev project
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
+[ -z "$PYTHON_VERSION" ] && error "python3 not found. Please install it first."
+info "Using system Python version: $PYTHON_VERSION"
 
-# Allow to use the system python packages in the uv virtual environment, which is needed to use ROS2 python packages.
-echo "Creating a uv virtual environment with system site packages"
+# Start a uv project. Creates pyproject.toml
+uv init -p "$PYTHON_VERSION"
+info "uv project initialised"
+
+# Create venv with access to system site-packages (required for ROS2 python packages)
 uv venv --system-site-packages
+info "Virtual environment created with --system-site-packages"
 
-# This checks the constraints of the system python packages, 
-# which is needed to avoid installing incompatible versions of packages 
-# when we add nbdev and its dependencies.
-pip list --format=freeze > system_constraints.txt
+# Install pip into the venv first so we can use it to snapshot system constraints
+uv add pip
+info "pip added to venv"
+
+# Snapshot system package versions to use as install constraints.
+# matplotlib-inline 0.2.1 (nbdev's preferred) is incompatible with the ROS2 system Matplotlib,
+# so we pin it to 0.1.6 manually.
+uv run pip list --format=freeze > system_constraints.txt
 echo "matplotlib-inline==0.1.6" >> system_constraints.txt
+info "system_constraints.txt generated"
 
-# Add a local nbdev to the project.
-echo "Adding nbdev to the project with uv"
+# Add nbdev respecting system constraints
+info "Adding nbdev to the project"
 uv add nbdev --constraint system_constraints.txt
 
-# Remove uv pyproject.toml, since we will use the one from nbdev, 
-# which is more complete and has the right dependencies.
+# Install Quarto before nbdev-new, which verifies quarto is available during setup
+uv run nbdev-install-quarto
+info "Quarto installed"
+
+# Remove the uv-generated pyproject.toml so nbdev-new can create its own richer version
 rm pyproject.toml
 
-# Create the nbdev project (Adds its own pyproject.toml which can be updated easily with uv add)
-# uv run nbdev-new to use the nbdev locally installed by uv in .venv
+# Initialise the nbdev project (creates pyproject.toml, nbs/, etc.)
 uv run nbdev-new
+info "nbdev project initialised"
 
-# Add packages to run the notebooks in ipykernels
-echo "Adding pip and ipykernel"
-uv add pip ipykernel --constraint system_constraints.txt
+# Add ipykernel so notebooks run in the project kernel
+uv add ipykernel --constraint system_constraints.txt
+info "ipykernel added"
 
-# Add quarto to the project, which is needed for the documentation.
-uv run nbdev-install-quarto
+echo ""
+echo "══════════════════════════════════"
+info "Project setup complete!"
+echo "══════════════════════════════════"
