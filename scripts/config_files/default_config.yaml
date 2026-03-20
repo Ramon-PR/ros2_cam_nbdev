@@ -1,0 +1,16 @@
+# tructure of a config file to set the parameters for the nodes. 
+# /name_of_node:
+#   ros__parameters:
+#     my_param_1: 10
+#     my_param_2: 0.5
+#     my_param_3: true
+# 
+# Note:
+# use /** instead of the name of the node 
+# to reuse the file for multiple nodes with different names but the same parameters.
+
+/**:
+   ros__parameters:
+      # Add more parameters as needed
+
+

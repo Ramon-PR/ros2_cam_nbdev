@@ -1,0 +1,8 @@
+# ROS2 Python camera processing
+rclpy
+sensor_msgs
+std_msgs
+image_transport
+cv_bridge
+python3-opencv
+ros2launch
