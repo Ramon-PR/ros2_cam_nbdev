@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ros2_cam_nbdev"
+dynamic = ["version"]
+description = "Development and easy guide on ROS2 camera nodes"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Ramon Pozuelo Ruiz", email = "pozueloruizramon@gmail.com"}]
+keywords = ['nbdev']
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "ipykernel>=7.2.0",
+]
+
+[project.urls]
+Repository = "https://github.com/Ramon-PR/ros2_cam_nbdev"
+Documentation = "https://Ramon-PR.github.io/ros2_cam_nbdev/"
+
+[project.entry-points.nbdev]
+ros2_cam_nbdev = "ros2_cam_nbdev._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "ros2_cam_nbdev.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["ros2_cam_nbdev"]
+
+[tool.nbdev]

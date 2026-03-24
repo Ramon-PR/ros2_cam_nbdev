@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "ros2_cam_nbdev"
+  site-url: "https://Ramon-PR.github.io/ros2_cam_nbdev"
+  description: "Development and easy guide on ROS2 camera nodes"
+  repo-branch: main
+  repo-url: "https://github.com/Ramon-PR/ros2_cam_nbdev"
