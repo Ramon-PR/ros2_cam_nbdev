@@ -46,10 +46,25 @@ detect_pkg_mgr() {
 }
 
 # ── 3. Install a system package ─────────────────────────
+# Helper for non-interactive apt installs (avoids tzdata prompts)
+apt_install() {
+  sudo apt-get update -qq
+  sudo apt-get -o Dpkg::Options::=--force-confdef \
+               -o Dpkg::Options::=--force-confold \
+               install -y -qq "$@"
+}
+
+apt_install_sudo() {
+  apt-get update -qq
+  apt-get -o Dpkg::Options::=--force-confdef \
+          -o Dpkg::Options::=--force-confold \
+          install -y -qq "$@"
+}
+
 pkg_install() {
   local pkg="$1"
   case "$PKG_MGR" in
-    apt)    sudo apt-get update -qq && sudo apt-get install -y -qq "$pkg" ;;
+    apt)    apt_install "$pkg" ;;
     dnf)    sudo dnf install -y -q "$pkg" ;;
     yum)    sudo yum install -y -q "$pkg" ;;
     pacman) sudo pacman -Sy --noconfirm "$pkg" ;;
@@ -72,7 +87,7 @@ ensure_sudo() {
     exit 1
   fi
   case "$PKG_MGR" in
-    apt)    apt-get update -qq && apt-get install -y -qq sudo ;;
+    apt)    apt_install_sudo sudo ;;
     dnf)    dnf install -y -q sudo ;;
     yum)    yum install -y -q sudo ;;
     pacman) pacman -Sy --noconfirm sudo ;;

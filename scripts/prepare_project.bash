@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# NOTE FOR AI AGENTS:
+# This script creates an nbdev project that integrates with ROS2's system Python.
+# Key insight: "uv init" creates an initial pyproject.toml, but "nbdev-new" replaces
+# it with its own richer version. After nbdev-new runs, we must re-register the
+# dependencies (pip, nbdev, ipykernel) into the NEW pyproject.toml so they're tracked.
+# The packages are already installed in the venv; this just makes them visible to nbdev.
+
 # Changes with respect to the original template:
 # - ROS2 is installed in the system, so we need to use the system python packages 
 #   in the uv virtual environment, which is needed to use ROS2 python packages.
@@ -41,16 +48,16 @@ else
 fi
 
 # Python version of the system, needed to create the right uv/nbdev project
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
-[ -z "$PYTHON_VERSION" ] && error "python3 not found. Please install it first."
-info "Using system Python version: $PYTHON_VERSION"
+PYTHON_BIN="/usr/bin/python3"
+[ -x "$PYTHON_BIN" ] || error "python3 not found at $PYTHON_BIN"
+info "Using system Python: $PYTHON_BIN ($(${PYTHON_BIN} --version 2>&1))"
 
 # Start a uv project. Creates pyproject.toml
-uv init -p "$PYTHON_VERSION"
+uv init --python "$PYTHON_BIN"
 info "uv project initialised"
 
 # Create venv with access to system site-packages (required for ROS2 python packages)
-uv venv --system-site-packages
+uv venv --python "$PYTHON_BIN" --system-site-packages
 info "Virtual environment created with --system-site-packages"
 
 # Install pip into the venv first so we can use it to snapshot system constraints
@@ -79,9 +86,10 @@ rm pyproject.toml
 uv run nbdev-new
 info "nbdev project initialised"
 
-# Add ipykernel so notebooks run in the project kernel
-uv add ipykernel --constraint system_constraints.txt
-info "ipykernel added"
+# Re-declare all dependencies in the nbdev-generated pyproject.toml
+# The packages are already installed in the venv; this just registers them
+uv add pip nbdev ipykernel --constraint system_constraints.txt
+info "pip, nbdev and ipykernel registered in nbdev's pyproject.toml"
 
 echo ""
 echo "══════════════════════════════════"
