@@ -17,6 +17,9 @@ git clone https://github.com/<you>/<your-project>.git && cd <your-project>
 # 2. Install system dependencies (curl, git, uv, python3)
 bash scripts/basic_install.sh
 
+# 2.5. Source uv so it's available in your terminal
+source "$HOME/.local/bin/env"
+
 # 3. Scaffold the uv + nbdev project (venv, nbdev, quarto)
 bash scripts/prepare_project.bash
 ```
